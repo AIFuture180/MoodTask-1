@@ -135,7 +135,7 @@
             <button class="close-button" onclick="closePopup('breathing')">✕</button>
             <h4>Breathing Exercise</h4>
             <p>Follow the circle's rhythm: inhale for 4 seconds, hold for 4, and exhale for 4.</p>
-            <div id="breathing-circle">Inhale</div>
+            <div id="breathing-circle">Ready</div>
             <button class="action-button" onclick="startBreathing()">Start</button>
         </div>
     </div>
@@ -255,7 +255,7 @@
             gtag('event', 'Get Started Click', { 'event_category': 'Hero', 'event_label': 'Get Started Button' });
         }
 
-        // Mood to task mapping
+        // Existing moodTasks for follow-up questions
         const moodTasks = {
             tired: [
                 { emoji: "☕", task: "Take 5 deep breaths to re-energize.", followUp: "Feel more awake?" },
@@ -299,123 +299,667 @@
             ]
         };
 
-        // Select mood
+        // Enhanced mood-to-tool mapping with effectiveness ratings (1-5) [Claude's Code]
+        const moodTools = {
+            tired: [
+                { tool: 'breathing', effectiveness: 4, reason: "Deep breathing increases oxygen to your brain and muscles" },
+                { tool: 'stretch', effectiveness: 5, reason: "Physical movement stimulates blood flow and energy" },
+                { tool: 'dance', effectiveness: 4, reason: "Gets your body moving and releases endorphins" },
+                { tool: 'color', effectiveness: 3, reason: "Visual stimulation can increase alertness" }
+            ],
+            stressed: [
+                { tool: 'breathing', effectiveness: 5, reason: "Activates parasympathetic nervous system to reduce stress" },
+                { tool: 'punching', effectiveness: 4, reason: "Physical release of tension" },
+                { tool: 'soundscape', effectiveness: 4, reason: "Auditory distraction and calming effect" },
+                { tool: 'worry', effectiveness: 3, reason: "Helps process and release concerns" }
+            ],
+            sad: [
+                { tool: 'gratitude', effectiveness: 5, reason: "Shifts focus to positive aspects in your life" },
+                { tool: 'dance', effectiveness: 4, reason: "Movement and music boost mood-enhancing hormones" },
+                { tool: 'color', effectiveness: 3, reason: "Color therapy can influence emotional state" },
+                { tool: 'doodle', effectiveness: 3, reason: "Creative expression helps process emotions" }
+            ],
+            anxious: [
+                { tool: 'breathing', effectiveness: 5, reason: "Slows heart rate and induces relaxation" },
+                { tool: 'worry', effectiveness: 4, reason: "Externalizes and processes anxious thoughts" },
+                { tool: 'soundscape', effectiveness: 4, reason: "Provides grounding sensory input" },
+                { tool: 'doodle', effectiveness: 3, reason: "Mindful activity redirects anxious energy" }
+            ],
+            angry: [
+                { tool: 'punching', effectiveness: 5, reason: "Safe physical outlet for anger" },
+                { tool: 'breathing', effectiveness: 4, reason: "Calms physiological anger response" },
+                { tool: 'worry', effectiveness: 3, reason: "Helps process and understand angry feelings" },
+                { tool: 'stretch', effectiveness: 3, reason: "Releases physical tension stored in muscles" }
+            ],
+            bored: [
+                { tool: 'dance', effectiveness: 5, reason: "Provides immediate stimulation and fun" },
+                { tool: 'doodle', effectiveness: 4, reason: "Creative engagement activates mind" },
+                { tool: 'color', effectiveness: 4, reason: "Visual engagement and focus" },
+                { tool: 'stretch', effectiveness: 3, reason: "Physical activity shifts energy" }
+            ],
+            happy: [
+                { tool: 'dance', effectiveness: 5, reason: "Amplifies positive feelings through movement" },
+                { tool: 'gratitude', effectiveness: 5, reason: "Reinforces and extends positive emotions" },
+                { tool: 'doodle', effectiveness: 3, reason: "Channel creative energy in a positive state" },
+                { tool: 'color', effectiveness: 3, reason: "Extends the positive sensory experience" }
+            ],
+            lonely: [
+                { tool: 'gratitude', effectiveness: 4, reason: "Fosters connection with positive aspects of life" },
+                { tool: 'soundscape', effectiveness: 4, reason: "Creates ambient presence and comfort" },
+                { tool: 'dance', effectiveness: 3, reason: "Self-expression and connection with music" },
+                { tool: 'doodle', effectiveness: 3, reason: "Self-expression and creative connection" }
+            ]
+        };
+
+        // User mood and activity tracking [Claude's Code]
+        let userPreferences = {
+            lastMood: null,
+            activityHistory: [],
+            favorites: [],
+            achievements: {
+                moodVariety: 0,
+                activityCompletions: 0,
+                streakDays: 0
+            }
+        };
+
+        // Load user data from localStorage [Claude's Code]
+        function loadUserData() {
+            const savedData = localStorage.getItem('moodTaskUserData');
+            if (savedData) {
+                userPreferences = JSON.parse(savedData);
+                
+                // Update UI based on saved data
+                if (userPreferences.lastMood) {
+                    const moodButton = document.querySelector(`button[data-mood="${userPreferences.lastMood}"]`);
+                    if (moodButton) moodButton.classList.add('last-selected');
+                }
+                
+                updateAchievementDisplay();
+            }
+
+            // Check for streak
+            const lastVisit = localStorage.getItem('moodTaskLastVisit');
+            const today = new Date().toDateString();
+            
+            if (lastVisit) {
+                const lastDate = new Date(lastVisit);
+                const dayDifference = Math.floor((new Date(today) - lastDate) / (1000 * 60 * 60 * 24));
+                
+                if (dayDifference === 1) {
+                    userPreferences.achievements.streakDays++;
+                    showStreakNotification(userPreferences.achievements.streakDays);
+                } else if (dayDifference > 1) {
+                    userPreferences.achievements.streakDays = 1;
+                }
+            }
+            
+            localStorage.setItem('moodTaskLastVisit', today);
+            saveUserData();
+        }
+
+        // Save user data to localStorage [Claude's Code]
+        function saveUserData() {
+            localStorage.setItem('moodTaskUserData', JSON.stringify(userPreferences));
+        }
+
+        // Show streak notification [Claude's Code]
+        function showStreakNotification(days) {
+            const notification = document.createElement('div');
+            notification.className = 'streak-notification';
+            notification.innerHTML = `
+                <div class="streak-icon">🔥</div>
+                <div class="streak-text">
+                    <h4>${days} Day Streak!</h4>
+                    <p>You're making mood improvement a habit</p>
+                </div>
+            `;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 100);
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 500);
+            }, 5000);
+        }
+
+        // Display achievement progress [Claude's Code]
+        function updateAchievementDisplay() {
+            // Create or update achievement section
+            let achievementSection = document.getElementById('achievements');
+            
+            if (!achievementSection) {
+                achievementSection = document.createElement('div');
+                achievementSection.id = 'achievements';
+                achievementSection.className = 'achievement-section';
+                achievementSection.innerHTML = `
+                    <h3>Your Progress</h3>
+                    <div class="achievement-grid"></div>
+                `;
+                document.getElementById('result').after(achievementSection);
+            }
+            
+            const achievementGrid = achievementSection.querySelector('.achievement-grid');
+            achievementGrid.innerHTML = `
+                <div class="achievement-card">
+                    <div class="achievement-icon">🔍</div>
+                    <div class="achievement-info">
+                        <h4>Mood Explorer</h4>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" style="width: ${Math.min(userPreferences.achievements.moodVariety/8*100, 100)}%"></div>
+                        </div>
+                        <p>${userPreferences.achievements.moodVariety}/8 different moods explored</p>
+                    </div>
+                </div>
+                <div class="achievement-card">
+                    <div class="achievement-icon">🏆</div>
+                    <div class="achievement-info">
+                        <h4>Activity Master</h4>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" style="width: ${Math.min(userPreferences.achievements.activityCompletions/20*100, 100)}%"></div>
+                        </div>
+                        <p>${userPreferences.achievements.activityCompletions}/20 activities completed</p>
+                    </div>
+                </div>
+                <div class="achievement-card">
+                    <div class="achievement-icon">🔥</div>
+                    <div class="achievement-info">
+                        <h4>Consistency Streak</h4>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" style="width: ${Math.min(userPreferences.achievements.streakDays/7*100, 100)}%"></div>
+                        </div>
+                        <p>${userPreferences.achievements.streakDays} day streak</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Enhanced mood selection [Claude's Code]
         document.querySelectorAll('#mood-buttons button').forEach(button => {
             button.addEventListener('click', () => {
+                // Visual feedback for selection
                 document.querySelectorAll('#mood-buttons button').forEach(btn => btn.classList.remove('selected'));
                 button.classList.add('selected');
+                
+                // Get the selected mood
                 const mood = button.getAttribute('data-mood');
+                
+                // Track this mood selection
+                userPreferences.lastMood = mood;
+                
+                // Update achievement if this is a new mood
+                const uniqueMoods = new Set([...userPreferences.activityHistory.map(item => item.mood), mood]);
+                userPreferences.achievements.moodVariety = uniqueMoods.size;
+                
+                saveUserData();
+                
+                // Show task for this mood
                 showTask(mood);
+                
+                // Highlight recommended tools
+                highlightRecommendedTools(mood);
+                
                 gtag('event', 'Mood Selection', { 'event_category': 'Mood', 'event_label': mood });
             });
         });
 
-        // Show task based on mood
+        // Highlight recommended tools based on selected mood [Claude's Code]
+        function highlightRecommendedTools(mood) {
+            // Reset all tool highlights
+            document.querySelectorAll('.tool-button').forEach(tool => {
+                tool.classList.remove('highly-recommended', 'recommended', 'somewhat-recommended');
+                tool.querySelector('.effectiveness-badge')?.remove();
+            });
+            
+            // If no mood is selected, return
+            if (!mood) return;
+            
+            // Get recommended tools for this mood
+            const recommendations = moodTools[mood];
+            
+            // Apply highlights based on effectiveness
+            recommendations.forEach(rec => {
+                const toolButton = document.querySelector(`.tool-button.${rec.tool}`);
+                if (!toolButton) return;
+                
+                // Add effectiveness class
+                if (rec.effectiveness >= 5) {
+                    toolButton.classList.add('highly-recommended');
+                } else if (rec.effectiveness >= 4) {
+                    toolButton.classList.add('recommended');
+                } else {
+                    toolButton.classList.add('somewhat-recommended');
+                }
+                
+                // Add effectiveness badge
+                const badge = document.createElement('div');
+                badge.className = 'effectiveness-badge';
+                badge.innerHTML = `${rec.effectiveness}/5`;
+                
+                // Add tooltip with reason
+                toolButton.setAttribute('data-reason', rec.reason);
+                
+                // Append badge to tool button
+                toolButton.appendChild(badge);
+            });
+            
+            // Add pulse animation to top recommendation
+            const topRecommendation = recommendations.sort((a, b) => b.effectiveness - a.effectiveness)[0];
+            if (topRecommendation) {
+                const topToolButton = document.querySelector(`.tool-button.${topRecommendation.tool}`);
+                if (topToolButton) {
+                    topToolButton.classList.add('pulse-animation');
+                    
+                    // Add "Try this!" flag to top recommendation
+                    const tryThisFlag = document.createElement('div');
+                    tryThisFlag.className = 'try-this-flag';
+                    tryThisFlag.textContent = 'Try this!';
+                    topToolButton.appendChild(tryThisFlag);
+                }
+            }
+        }
+
+        // Enhanced task display [Claude's Code, modified to include followUp]
         function showTask(mood) {
             const tasks = moodTasks[mood];
             const randomTask = tasks[Math.floor(Math.random() * tasks.length)];
+            const recommendations = moodTools[mood];
+            const topRecommendation = recommendations.sort((a, b) => b.effectiveness - a.effectiveness)[0];
             const resultDiv = document.getElementById('result');
+            
+            // Create animated entry for the task
             resultDiv.innerHTML = `
-                <div class="chat-bubble">
+                <div class="chat-bubble animated-entry">
                     <div class="task-header">
                         <span class="mood-emoji">${randomTask.emoji}</span>
                         <h3>Task for ${mood.charAt(0).toUpperCase() + mood.slice(1)}</h3>
                     </div>
-                    <p class="task-text">${randomTask.task}</p>
+                    <p class="task-text">Try the <strong>${topRecommendation.tool.replace('-', ' ')}</strong> tool - ${topRecommendation.reason}.</p>
+                    <div class="timer-container" id="taskTimer">
+                        <button class="timer-button" onclick="startTaskTimer(30)">
+                            <i class="fas fa-stopwatch"></i> Start 30s Timer
+                        </button>
+                        <div class="timer-progress">
+                            <div class="timer-bar"></div>
+                        </div>
+                        <span class="timer-text"></span>
+                    </div>
                     <p class="follow-up-question">${randomTask.followUp}</p>
+                    <div class="reaction-buttons">
+                        <button class="reaction-button" onclick="recordReaction('${mood}', '${topRecommendation.tool}', 'didnt-help')">
+                            <span class="reaction-icon">👎</span> Didn't help
+                        </button>
+                        <button class="reaction-button" onclick="recordReaction('${mood}', '${topRecommendation.tool}', 'somewhat-helped')">
+                            <span class="reaction-icon">👌</span> Somewhat helped
+                        </button>
+                        <button class="reaction-button" onclick="recordReaction('${mood}', '${topRecommendation.tool}', 'really-helped')">
+                            <span class="reaction-icon">👍</span> Really helped!
+                        </button>
+                    </div>
                     <div class="task-buttons">
-                        <button class="favorite-button" onclick="saveFavorite('${mood}', '${randomTask.task}')">
+                        <button class="favorite-button" onclick="saveFavorite('${mood}', '${topRecommendation.tool}')">
                             <span class="heart-icon">❤️</span> Favorite
                         </button>
                         <button class="new-task-button" onclick="showTask('${mood}')">New Task</button>
                     </div>
                 </div>
             `;
+            
             resultDiv.scrollIntoView({ behavior: 'smooth' });
         }
 
-        // Save favorite task (placeholder for future localStorage implementation)
+        // Task timer functionality [Claude's Code]
+        function startTaskTimer(seconds) {
+            const timerContainer = document.getElementById('taskTimer');
+            const timerButton = timerContainer.querySelector('.timer-button');
+            const timerBar = timerContainer.querySelector('.timer-bar');
+            const timerText = timerContainer.querySelector('.timer-text');
+            
+            timerButton.style.display = 'none';
+            timerBar.style.display = 'block';
+            timerText.style.display = 'block';
+            
+            let timeLeft = seconds;
+            timerText.textContent = `${timeLeft}s`;
+            timerBar.style.width = '100%';
+            
+            const interval = setInterval(() => {
+                timeLeft--;
+                timerText.textContent = `${timeLeft}s`;
+                timerBar.style.width = `${(timeLeft/seconds)*100}%`;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(interval);
+                    timerText.textContent = 'Complete!';
+                    // Confetti effect when timer completes
+                    showCompletionConfetti();
+                    
+                    // Record completion for achievements
+                    userPreferences.achievements.activityCompletions++;
+                    saveUserData();
+                    updateAchievementDisplay();
+                }
+            }, 1000);
+        }
+
+        // Confetti effect for task completion [Claude's Code]
+        function showCompletionConfetti() {
+            const confettiContainer = document.createElement('div');
+            confettiContainer.className = 'confetti-container';
+            document.body.appendChild(confettiContainer);
+            
+            for (let i = 0; i < 100; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.setProperty('--fall-duration', `${Math.random() * 3 + 2}s`);
+                confetti.style.setProperty('--fall-delay', `${Math.random() * 2}s`);
+                confetti.style.left = `${Math.random() * 100}%`;
+                confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 80%, 60%)`;
+                confettiContainer.appendChild(confetti);
+            }
+            
+            setTimeout(() => {
+                confettiContainer.remove();
+            }, 5000);
+        }
+
+        // Record user's reaction to the task [Claude's Code]
+        function recordReaction(mood, task, reaction) {
+            // Store this reaction
+            userPreferences.activityHistory.push({
+                mood: mood,
+                task: task,
+                reaction: reaction,
+                timestamp: new Date().toISOString()
+            });
+            
+            saveUserData();
+            
+            // Show feedback based on reaction
+            const reactionButtons = document.querySelector('.reaction-buttons');
+            
+            reactionButtons.innerHTML = '<p class="reaction-feedback">Thanks for your feedback!</p>';
+            
+            // If it didn't help, suggest trying a tool
+            if (reaction === 'didnt-help') {
+                const recommendations = moodTools[mood];
+                const topRecommendation = recommendations.sort((a, b) => b.effectiveness - a.effectiveness)[0];
+                
+                if (topRecommendation) {
+                    reactionButtons.innerHTML += `
+                        <p class="tool-suggestion">
+                            Try the <strong>${topRecommendation.tool.replace('-', ' ')}</strong> tool - 
+                            ${topRecommendation.reason}.
+                            <button class="try-tool-button" onclick="openPopup('${topRecommendation.tool}')">
+                                Try Now
+                            </button>
+                        </p>
+                    `;
+                }
+            }
+            
+            gtag('event', 'Task Reaction', { 
+                'event_category': 'Task', 
+                'event_label': `${mood} - ${reaction}` 
+            });
+        }
+
+        // Enhanced Save favorite task (localStorage implementation) [Claude's Code]
         function saveFavorite(mood, task) {
-            alert(`Saved to favorites: ${task}`);
+            // Add to favorites if not already there
+            if (!userPreferences.favorites.some(fav => fav.mood === mood && fav.task === task)) {
+                userPreferences.favorites.push({
+                    mood: mood,
+                    task: task,
+                    timestamp: new Date().toISOString()
+                });
+                
+                saveUserData();
+                
+                // Show saved confirmation with heart animation
+                const favoriteButton = document.querySelector('.favorite-button');
+                favoriteButton.innerHTML = '<span class="heart-icon animated-heart">❤️</span> Saved!';
+                favoriteButton.disabled = true;
+            }
+            
             gtag('event', 'Favorite Task', { 'event_category': 'Task', 'event_label': `${mood} - ${task}` });
         }
 
-        // Popup handling
+        // Enhanced tool popup opening with animation and tracking [Claude's Code]
         function openPopup(tool) {
-            document.getElementById(`${tool}Popup`).style.display = 'flex';
+            const popup = document.getElementById(`${tool}Popup`);
+            
+            // Create animated entrance
+            popup.style.display = 'flex';
+            popup.classList.add('popup-entering');
+            
+            setTimeout(() => {
+                popup.classList.remove('popup-entering');
+            }, 300);
+            
+            // Initialize specific tool
             if (tool === 'doodle') initDoodle();
+            if (tool === 'breathing') prepareBreathingCircle();
+            if (tool === 'color') prepareColorShift();
+            if (tool === 'punching') preparePunchingBag();
+            
+            // Track tool usage
+            userPreferences.activityHistory.push({
+                type: 'tool',
+                tool: tool,
+                timestamp: new Date().toISOString()
+            });
+            
+            saveUserData();
+            
             gtag('event', 'Tool Opened', { 'event_category': 'Tool', 'event_label': tool });
         }
 
+        // Close popup [Existing Code]
         function closePopup(tool) {
             document.getElementById(`${tool}Popup`).style.display = 'none';
             if (tool === 'soundscape') pauseSoundscape();
             if (tool === 'dance') pauseDanceBeat();
         }
 
-        // Breathing exercise
-        function startBreathing() {
+        // Enhanced breathing exercise with animated circle and guided instructions [Claude's Code]
+        function prepareBreathingCircle() {
             const circle = document.getElementById('breathing-circle');
-            let step = 0;
-            const steps = ['inhale', 'hold', 'exhale'];
-            circle.className = ''; // Reset animation
-            const interval = setInterval(() => {
-                if (step >= 3) {
-                    clearInterval(interval);
-                    circle.textContent = 'Done!';
-                    return;
-                }
-                circle.textContent = steps[step].charAt(0).toUpperCase() + steps[step].slice(1);
-                circle.className = steps[step];
-                step++;
-            }, 4000);
+            const instructions = document.createElement('div');
+            instructions.className = 'breathing-instructions';
+            instructions.textContent = 'Click Start when ready';
+            
+            // Reset the circle to initial state
+            circle.className = '';
+            circle.textContent = 'Ready';
+            
+            // If there's already an instruction div, remove it
+            const existingInstructions = document.querySelector('.breathing-instructions');
+            if (existingInstructions) existingInstructions.remove();
+            
+            circle.after(instructions);
         }
 
-        // Gratitude note
-        function saveGratitude() {
-            const text = document.getElementById('gratitude-text').value;
-            if (text.trim()) {
-                alert('Gratitude note saved! (This will be stored locally in the future)');
-                document.getElementById('gratitude-text').value = '';
-                closePopup('gratitude');
-            } else {
-                alert('Please write something before saving.');
+        // Enhanced breathing exercise with better visuals [Claude's Code]
+        function startBreathing() {
+            const circle = document.getElementById('breathing-circle');
+            const instructions = document.querySelector('.breathing-instructions');
+            const startButton = document.querySelector('#breathingPopup .action-button');
+            
+            startButton.disabled = true;
+            
+            // Set up cycle steps with animations and timing
+            const steps = [
+                { phase: 'Inhale', duration: 4000, animation: 'expand', instruction: 'Breathe in slowly...' },
+                { phase: 'Hold', duration: 4000, animation: 'hold', instruction: 'Hold your breath...' },
+                { phase: 'Exhale', duration: 4000, animation: 'contract', instruction: 'Release slowly...' },
+                { phase: 'Rest', duration: 2000, animation: 'rest', instruction: 'And relax...' }
+            ];
+            
+            let currentStep = 0;
+            let cycleCount = 0;
+            const totalCycles = 3;
+            
+            // Update function for breathing cycle
+            function updateBreathingState() {
+                const step = steps[currentStep];
+                
+                // Update UI for this step
+                circle.className = step.animation;
+                circle.textContent = step.phase;
+                instructions.textContent = step.instruction;
+                
+                // Prepare for next step
+                currentStep = (currentStep + 1) % steps.length;
+                
+                // If completed a full cycle
+                if (currentStep === 0) {
+                    cycleCount++;
+                    
+                    // If all cycles completed
+                    if (cycleCount >= totalCycles) {
+                        setTimeout(() => {
+                            circle.className = 'complete';
+                            circle.textContent = 'Complete';
+                            instructions.textContent = 'Great job!';
+                            startButton.disabled = false;
+                            startButton.textContent = 'Restart';
+                            
+                            // Show completion particles
+                            showBreathingCompletionEffect();
+                        }, steps[3].duration);
+                        return;
+                    }
+                }
+                
+                // Schedule next update
+                setTimeout(updateBreathingState, step.duration);
+            }
+            
+            // Start the first step
+            updateBreathingState();
+        }
+
+        // Breathing completion effect [Claude's Code]
+        function showBreathingCompletionEffect() {
+            const container = document.querySelector('#breathingPopup .popup-content');
+            
+            // Create particles
+            for (let i = 0; i < 20; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'breathing-particle';
+                
+                // Random position around the circle
+                const angle = Math.random() * Math.PI * 2;
+                const distance = 50 + Math.random() * 50;
+                const x = Math.cos(angle) * distance;
+                const y = Math.sin(angle) * distance;
+                
+                // Set particle style
+                particle.style.left = `calc(50% + ${x}px)`;
+                particle.style.top = `calc(50% + ${y}px)`;
+                particle.style.backgroundColor = `hsl(${120 + Math.random() * 60}, 80%, 60%)`;
+                particle.style.animationDelay = `${Math.random() * 0.5}s`;
+                
+                container.appendChild(particle);
+                
+                // Remove particle after animation completes
+                setTimeout(() => {
+                    particle.remove();
+                }, 2000);
             }
         }
 
-        // Soundscape
-        let soundscapeAudio = null;
-        let soundscapeInterval = null;
-
-        function playSoundscape() {
-            const select = document.getElementById('sound-select');
-            const sound = select.value;
-            if (soundscapeAudio) soundscapeAudio.pause();
-            soundscapeAudio = new Audio(`sounds/${sound}.mp3`);
-            soundscapeAudio.loop = false;
-            soundscapeAudio.play();
-
-            const progressBar = document.getElementById('soundscape-progress');
-            progressBar.style.width = '100%';
-            let timeLeft = 30;
-            soundscapeInterval = setInterval(() => {
-                timeLeft--;
-                progressBar.style.width = (timeLeft / 30 * 100) + '%';
-                if (timeLeft <= 0) {
-                    clearInterval(soundscapeInterval);
-                    soundscapeAudio.pause();
-                }
-            }, 1000);
+        // Enhanced color shift animation [Claude's Code]
+        function prepareColorShift() {
+            const square = document.getElementById('color-square');
+            
+            // Reset square to initial state
+            square.style.backgroundColor = '#2ecc71';
+            square.style.transform = 'scale(1)';
+            square.innerHTML = '';
         }
 
-        function pauseSoundscape() {
-            if (soundscapeAudio) soundscapeAudio.pause();
-            if (soundscapeInterval) clearInterval(soundscapeInterval);
-            document.getElementById('soundscape-progress').style.width = '100%';
+        // Enhanced color shift with pulsing and mood recommendations [Claude's Code]
+        function startColorShift() {
+            const square = document.getElementById('color-square');
+            const colors = [
+                { color: '#2ecc71', mood: 'tranquil', transform: 'scale(1)' },
+                { color: '#3498db', mood: 'calm', transform: 'scale(1.1) rotate(5deg)' },
+                { color: '#9b59b6', mood: 'creative', transform: 'scale(0.9) rotate(-5deg)' },
+                { color: '#e74c3c', mood: 'energized', transform: 'scale(1.2)' },
+                { color: '#f1c40f', mood: 'optimistic', transform: 'scale(1) rotate(10deg)' }
+            ];
+            
+            let index = 0;
+            
+            // Update the button state
+            const button = document.querySelector('#colorPopup .action-button');
+            button.disabled = true;
+            button.textContent = 'Shifting...';
+            
+            // Create mood label inside square
+            const moodLabel = document.createElement('div');
+            moodLabel.className = 'color-mood-label';
+            square.appendChild(moodLabel);
+            
+            // Start color shifting animation
+            const interval = setInterval(() => {
+                const colorInfo = colors[index];
+                
+                // Apply color and transform
+                square.style.backgroundColor = colorInfo.color;
+                square.style.transform = colorInfo.transform;
+                
+                // Update mood label with fade effect
+                moodLabel.style.opacity = '0';
+                setTimeout(() => {
+                    moodLabel.textContent = colorInfo.mood;
+                    moodLabel.style.opacity = '1';
+                }, 300);
+                
+                // Move to next color
+                index = (index + 1) % colors.length;
+            }, 2000);
+            
+            // End the animation after 10 seconds
+            setTimeout(() => {
+                clearInterval(interval);
+                square.style.transform = 'scale(1)';
+                
+                // Update mood label to completion
+                moodLabel.style.opacity = '0';
+                setTimeout(() => {
+                    moodLabel.textContent = 'Complete';
+                    moodLabel.style.opacity = '1';
+                }, 300);
+                
+                // Reset button
+                button.disabled = false;
+                button.textContent = 'Start Again';
+            }, 10000);
         }
 
-        // Punching bag
+        // Enhanced punching bag with better effects [Claude's Code]
         let punchCount = 10;
+        function preparePunchingBag() {
+            // Reset punch count
+            punchCount = 10;
+            
+            const bag = document.getElementById('punching-bag');
+            const counter = document.getElementById('punch-counter');
+            
+            bag.textContent = punchCount;
+            counter.textContent = `Punches left: ${punchCount}`;
+            
+            // Add shadow effect to bag
+            bag.style.boxShadow = '0 10px 20px rgba(0,0,0,0.3)';
+        }
+
+        // Punching bag interaction [Existing Code]
         document.getElementById('punching-bag').addEventListener('click', () => {
             if (punchCount > 0) {
                 punchCount--;
@@ -434,13 +978,79 @@
             }
         });
 
-        // Stretch
+        // Gratitude note [Existing Code]
+        function saveGratitude() {
+            const text = document.getElementById('gratitude-text').value;
+            if (text.trim()) {
+                alert('Gratitude note saved! (This will be stored locally in the future)');
+                document.getElementById('gratitude-text').value = '';
+                closePopup('gratitude');
+            } else {
+                alert('Please write something before saving.');
+            }
+        }
+
+        // Soundscape [Existing Code]
+        let soundscapeAudio = null;
+        let soundscapeInterval = null;
+
+        function playSoundscape() {
+            const select = document.getElementById('sound-select');
+            const sound = select.value;
+            if (soundscapeAudio) {
+                soundscapeAudio.pause();
+                soundscapeAudio = null;
+            }
+
+            // Create audio object and set the source
+            soundscapeAudio = new Audio(`sounds/${sound}.mp3`);
+            soundscapeAudio.loop = false;
+
+            // Add error handling for audio loading
+            soundscapeAudio.onerror = () => {
+                console.error(`Failed to load audio file: sounds/${sound}.mp3`);
+                alert(`Sorry, the sound file for "${sound}" could not be loaded. Please ensure the file exists in the sounds/ directory.`);
+            };
+
+            // Play the audio and handle playback errors
+            soundscapeAudio.play().catch(error => {
+                console.error('Audio playback failed:', error);
+                alert('Audio playback failed. Please ensure your browser allows audio playback and the file is accessible.');
+            });
+
+            // Update progress bar
+            const progressBar = document.getElementById('soundscape-progress');
+            progressBar.style.width = '100%';
+            let timeLeft = 30;
+            soundscapeInterval = setInterval(() => {
+                timeLeft--;
+                progressBar.style.width = (timeLeft / 30 * 100) + '%';
+                if (timeLeft <= 0) {
+                    clearInterval(soundscapeInterval);
+                    soundscapeAudio.pause();
+                    soundscapeAudio = null;
+                }
+            }, 1000);
+        }
+
+        function pauseSoundscape() {
+            if (soundscapeAudio) {
+                soundscapeAudio.pause();
+                soundscapeAudio = null;
+            }
+            if (soundscapeInterval) {
+                clearInterval(soundscapeInterval);
+            }
+            document.getElementById('soundscape-progress').style.width = '100%';
+        }
+
+        // Stretch [Existing Code]
         function startStretch() {
             alert('Follow the instructions: Raise your arms, hold for 5 seconds, and lower them. Repeat 3 times.');
             closePopup('stretch');
         }
 
-        // Doodle pad
+        // Doodle pad [Existing Code]
         let isDrawing = false;
         let lastX = 0;
         let lastY = 0;
@@ -478,7 +1088,7 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
 
-        // Dance break
+        // Dance break [Existing Code]
         let danceAudio = null;
         let danceInterval = null;
 
@@ -507,7 +1117,7 @@
             document.getElementById('dance-progress').style.width = '100%';
         }
 
-        // Worry shredder
+        // Worry shredder [Existing Code]
         function shredWorry() {
             const worryText = document.getElementById('worry-text');
             const worryMessage = document.getElementById('worry-message');
@@ -524,25 +1134,73 @@
             }
         }
 
-        // Color shift
-        function startColorShift() {
-            const square = document.getElementById('color-square');
-            const colors = ['#2ecc71', '#3498db', '#9b59b6', '#e74c3c', '#f1c40f'];
-            let index = 0;
-            const interval = setInterval(() => {
-                square.style.backgroundColor = colors[index];
-                index = (index + 1) % colors.length;
-            }, 1000);
-            setTimeout(() => clearInterval(interval), 10000);
-        }
-
-        // Share on X
+        // Share on X [Existing Code]
         document.getElementById('share').addEventListener('click', () => {
             const url = encodeURIComponent(window.location.href);
             const text = encodeURIComponent('Boost your mood with MoodTask! Select your mood and get a quick, science-backed task to feel better. #MoodBoost');
             window.open(`https://x.com/intent/tweet?url=${url}&text=${text}`, '_blank');
             gtag('event', 'Share', { 'event_category': 'Social', 'event_label': 'X Share' });
         });
+
+        // Initialize when page loads [Claude's Code]
+        document.addEventListener('DOMContentLoaded', () => {
+            loadUserData();
+            
+            // Add personal greeting based on time of day
+            const greeting = document.getElementById('instruction');
+            const hour = new Date().getHours();
+            let timeBasedGreeting = '';
+            
+            if (hour < 12) {
+                timeBasedGreeting = 'Good Morning! ';
+            } else if (hour < 18) {
+                timeBasedGreeting = 'Good Afternoon! ';
+            } else {
+                timeBasedGreeting = 'Good Evening! ';
+            }
+            
+            greeting.textContent = timeBasedGreeting + 'How Are You Feeling Right Now?';
+            
+            // If user has a previous mood, highlight recommended tools
+            if (userPreferences.lastMood) {
+                highlightRecommendedTools(userPreferences.lastMood);
+
+                        // Initialize when page loads [Claude's Code]
+        document.addEventListener('DOMContentLoaded', () => {
+            loadUserData();
+            
+            // Add personal greeting based on time of day
+            const greeting = document.getElementById('instruction');
+            const hour = new Date().getHours();
+            let timeBasedGreeting = '';
+            
+            if (hour < 12) {
+                timeBasedGreeting = 'Good Morning! ';
+            } else if (hour < 18) {
+                timeBasedGreeting = 'Good Afternoon! ';
+            } else {
+                timeBasedGreeting = 'Good Evening! ';
+            }
+            
+            greeting.textContent = timeBasedGreeting + 'How Are You Feeling Right Now?';
+            
+            // If user has a previous mood, highlight recommended tools
+            if (userPreferences.lastMood) {
+                highlightRecommendedTools(userPreferences.lastMood);
+            }
+            
+            // Preload sounds
+            const sounds = ['rain', 'waves', 'forest', 'dance-beat'];
+            sounds.forEach(sound => {
+                const audio = new Audio();
+                audio.preload = 'auto';
+                audio.src = `sounds/${sound}.mp3`;
+            });
+        });
     </script>
 </body>
 </html>
+            }
+            
+            // Preload sounds
+            const sounds = ['rain', 'waves', 'forest', 'dance
