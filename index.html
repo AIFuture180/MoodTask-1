@@ -130,12 +130,19 @@
         <p class="copyright">© 2025 MoodTask. All rights reserved.</p>
     </footer>
 
+    <!-- Updated Popups -->
     <div id="breathingPopup" class="popup">
         <div class="popup-content">
             <button class="close-button" onclick="closePopup('breathing')">✕</button>
             <h4>Breathing Exercise</h4>
-            <p>Follow the circle's rhythm: inhale for 4 seconds, hold for 4, and exhale for 4.</p>
-            <div id="breathing-circle">Ready</div>
+            <p>Follow the rhythm to calm your mind.</p>
+            <div id="breathing-circle">Start</div>
+            <p id="breathing-step">Inhale</p>
+            <p id="breathing-instruction">Click Start to begin</p>
+            <p id="breathing-timer">Time remaining: 60s</p>
+            <div class="progress-container">
+                <div class="progress-bar" id="breathing-progress"></div>
+            </div>
             <button class="action-button" onclick="startBreathing()">Start</button>
         </div>
     </div>
@@ -154,16 +161,20 @@
         <div class="popup-content">
             <button class="close-button" onclick="closePopup('soundscape')">✕</button>
             <h4>Relaxing Soundscape</h4>
-            <p>Choose a sound and relax for 30 seconds.</p>
-            <select class="sound-select" id="sound-select">
+            <p>Choose a sound and relax for 90 seconds.</p>
+            <select class="sound-select" id="soundscape-select">
                 <option value="rain">Rain</option>
                 <option value="waves">Ocean Waves</option>
                 <option value="forest">Forest</option>
             </select>
             <div class="audio-controls">
-                <button class="audio-btn" onclick="playSoundscape()"><i class="fas fa-play"></i></button>
-                <button class="audio-btn" onclick="pauseSoundscape()"><i class="fas fa-pause"></i></button>
+                <button class="audio-btn" id="play-btn"><i class="fas fa-play"></i></button>
             </div>
+            <div class="volume-control">
+                <label for="volume-slider">Volume:</label>
+                <input type="range" id="volume-slider" min="0" max="1" step="0.1" value="0.5">
+            </div>
+            <p id="soundscape-timer">Time remaining: 90s</p>
             <div class="progress-container">
                 <div class="progress-bar" id="soundscape-progress"></div>
             </div>
@@ -174,9 +185,12 @@
         <div class="popup-content">
             <button class="close-button" onclick="closePopup('punching')">✕</button>
             <h4>Punching Bag</h4>
-            <p>Click the bag to release your stress! (10 punches)</p>
-            <div id="punching-bag">10</div>
-            <p id="punch-counter">Punches left: 10</p>
+            <p>Click the bag to release your stress! (30 seconds)</p>
+            <div id="punching-bag">0</div>
+            <p id="punching-timer">Time remaining: 30s</p>
+            <div class="progress-container">
+                <div class="progress-bar" id="punching-progress"></div>
+            </div>
         </div>
     </div>
 
@@ -184,7 +198,12 @@
         <div class="popup-content">
             <button class="close-button" onclick="closePopup('stretch')">✕</button>
             <h4>Quick Stretch</h4>
-            <p>Raise your arms up, hold for 5 seconds, then slowly lower them. Repeat 3 times.</p>
+            <p id="stretch-prompt">Follow the stretch instructions below.</p>
+            <img id="stretch-image" src="/api/placeholder/200/150" alt="Stretch Image">
+            <p id="stretch-timer">Time remaining: 60s</p>
+            <div class="progress-container">
+                <div class="progress-bar" id="stretch-progress"></div>
+            </div>
             <button class="action-button" onclick="startStretch()">Start</button>
         </div>
     </div>
@@ -193,10 +212,17 @@
         <div class="popup-content">
             <button class="close-button" onclick="closePopup('doodle')">✕</button>
             <h4>Doodle Pad</h4>
-            <p>Draw freely to relax your mind.</p>
+            <p>Draw freely to relax your mind for 90 seconds.</p>
             <div class="drawing-tools">
-                <input type="color" id="doodle-color" value="#000000">
-                <button class="action-button" onclick="clearDoodle()">Clear</button>
+                <input type="color" id="color-picker" value="#000000">
+                <label for="brush-size">Brush Size:</label>
+                <input type="range" id="brush-size" min="1" max="10" value="2">
+                <button class="action-button" onclick="clearCanvas()">Clear</button>
+                <button class="action-button" onclick="saveDoodle()">Save</button>
+            </div>
+            <p id="doodle-timer">Time remaining: 90s</p>
+            <div class="progress-container">
+                <div class="progress-bar" id="doodle-progress"></div>
             </div>
             <canvas id="doodle-canvas"></canvas>
         </div>
@@ -206,13 +232,15 @@
         <div class="popup-content">
             <button class="close-button" onclick="closePopup('dance')">✕</button>
             <h4>Dance Break</h4>
-            <p>Play a beat and dance for 15 seconds!</p>
+            <p id="dance-prompt">Get ready to dance!</p>
+            <div id="dance-animation"></div>
             <div class="audio-controls">
                 <button class="audio-btn" onclick="playDanceBeat()"><i class="fas fa-play"></i></button>
                 <button class="audio-btn" onclick="pauseDanceBeat()"><i class="fas fa-pause"></i></button>
             </div>
+            <p id="dance-timer">Time remaining: 30s</p>
             <div class="progress-container">
-                <div class="progress-bar bounce" id="dance-progress"></div>
+                <div class="progress-bar" id="dance-progress"></div>
             </div>
         </div>
     </div>
@@ -223,8 +251,8 @@
             <h4>Worry Shredder</h4>
             <p>Type your worry, then shred it!</p>
             <textarea id="worry-text" placeholder="I’m worried about..."></textarea>
+            <div id="paper-strips-container"></div>
             <button class="action-button" onclick="shredWorry()">Shred It</button>
-            <p id="worry-message"></p>
         </div>
     </div>
 
@@ -232,9 +260,13 @@
         <div class="popup-content">
             <button class="close-button" onclick="closePopup('color')">✕</button>
             <h4>Color Shift</h4>
-            <p>Watch the square change colors to relax your mind.</p>
-            <div id="color-square" style="background-color: #2ecc71;"></div>
-            <button class="action-button" onclick="startColorShift()">Start</button>
+            <p id="color-prompt">Focus on the color to relax.</p>
+            <div id="color-square"></div>
+            <p id="color-timer">Time remaining: 60s</p>
+            <div class="progress-container">
+                <div class="progress-bar" id="color-progress"></div>
+            </div>
+            <button class="action-button" onclick="startColorFocus()">Start</button>
         </div>
     </div>
 
@@ -261,6 +293,35 @@
                 gtag(...args);
             } else {
                 console.warn('gtag is not defined, skipping analytics event:', args);
+            }
+        }
+
+        // Update progress bar (from Claude)
+        function updateProgress(elementId, total, current) {
+            const progressBar = document.getElementById(elementId);
+            const percentage = ((total - current) / total) * 100;
+            progressBar.style.width = percentage + '%';
+        }
+
+        // Sound setup
+        const natureSounds = {
+            rain: new Audio('sounds/rain.mp3'),
+            waves: new Audio('sounds/waves.mp3'),
+            forest: new Audio('sounds/forest.mp3')
+        };
+        let currentSound = null;
+        const successSound = new Audio('sounds/success.mp3');
+        const punchSound = new Audio('sounds/punch.mp3');
+        const shredSound = new Audio('sounds/shred.mp3');
+        const danceAudio = new Audio('sounds/dance-beat.mp3');
+
+        function playSound(sound, volume = 1) {
+            if (sound) {
+                sound.volume = volume;
+                sound.currentTime = 0;
+                sound.play().catch(error => {
+                    console.error('Sound playback failed:', error);
+                });
             }
         }
 
@@ -696,10 +757,11 @@
                 popup.classList.remove('popup-entering');
             }, 300);
             
-            if (tool === 'doodle') initDoodle();
+            if (tool === 'doodle') startDoodle();
             if (tool === 'breathing') prepareBreathingCircle();
             if (tool === 'color') prepareColorShift();
-            if (tool === 'punching') preparePunchingBag();
+            if (tool === 'punching') startPunching();
+            if (tool === 'soundscape') startSoundscape();
             
             userPreferences.activityHistory.push({
                 type: 'tool',
@@ -714,303 +776,522 @@
         // Close popup
         function closePopup(tool) {
             document.getElementById(`${tool}Popup`).style.display = 'none';
-            if (tool === 'soundscape') pauseSoundscape();
+            if (tool === 'soundscape') {
+                if (currentSound) {
+                    currentSound.pause();
+                    currentSound = null;
+                }
+                if (window.soundscapeInterval) clearInterval(window.soundscapeInterval);
+            }
             if (tool === 'dance') pauseDanceBeat();
+            if (tool === 'breathing' && window.breathingInterval) clearInterval(window.breathingInterval);
+            if (tool === 'punching' && window.punchingInterval) clearInterval(window.punchingInterval);
+            if (tool === 'stretch' && window.stretchInterval) clearInterval(window.stretchInterval);
+            if (tool === 'doodle' && window.doodleInterval) clearInterval(window.doodleInterval);
+            if (tool === 'dance' && window.danceInterval) clearInterval(window.danceInterval);
+            if (tool === 'color' && window.colorInterval) clearInterval(window.colorInterval);
         }
 
-        // Enhanced breathing exercise
+        // Prepare breathing circle
         function prepareBreathingCircle() {
             const circle = document.getElementById('breathing-circle');
-            const instructions = document.createElement('div');
-            instructions.className = 'breathing-instructions';
-            instructions.textContent = 'Click Start when ready';
+            const stepElement = document.getElementById('breathing-step');
+            const instructionElement = document.getElementById('breathing-instruction');
+            const timerElement = document.getElementById('breathing-timer');
             
             circle.className = '';
-            circle.textContent = 'Ready';
-            
-            const existingInstructions = document.querySelector('.breathing-instructions');
-            if (existingInstructions) existingInstructions.remove();
-            
-            circle.after(instructions);
+            stepElement.textContent = 'Inhale';
+            instructionElement.textContent = 'Click Start to begin';
+            timerElement.textContent = 'Time remaining: 60s';
+            updateProgress('breathing-progress', 60, 0);
         }
 
+        // Breathing Exercise: Enhanced with visual circle animation (from Claude)
         function startBreathing() {
-            const circle = document.getElementById('breathing-circle');
-            const instructions = document.querySelector('.breathing-instructions');
-            const startButton = document.querySelector('#breathingPopup .action-button');
-            
-            startButton.disabled = true;
-            
+            let time = 60;
+            let step = 0;
             const steps = [
-                { phase: 'Inhale', duration: 4000, animation: 'expand', instruction: 'Breathe in slowly...' },
-                { phase: 'Hold', duration: 4000, animation: 'hold', instruction: 'Hold your breath...' },
-                { phase: 'Exhale', duration: 4000, animation: 'contract', instruction: 'Release slowly...' },
-                { phase: 'Rest', duration: 2000, animation: 'rest', instruction: 'And relax...' }
+                { text: "Inhale", instruction: "Breathe in slowly through your nose...", class: "inhale" },
+                { text: "Hold", instruction: "Hold your breath...", class: "hold" },
+                { text: "Exhale", instruction: "Breathe out slowly through your mouth...", class: "exhale" }
             ];
+            const stepElement = document.getElementById('breathing-step');
+            const instructionElement = document.getElementById('breathing-instruction');
+            const timerElement = document.getElementById('breathing-timer');
+            const circle = document.getElementById('breathing-circle');
             
-            let currentStep = 0;
-            let cycleCount = 0;
-            const totalCycles = 3;
+            // Reset
+            circle.className = '';
+            updateProgress('breathing-progress', 60, 0);
             
-            function updateBreathingState() {
-                const step = steps[currentStep];
+            function updateBreathing() {
+                if (time % 4 === 0) {
+                    step = (step % 3);
+                    stepElement.textContent = steps[step].text;
+                    instructionElement.textContent = steps[step].instruction;
+                    circle.className = steps[step].class;
+                    step++;
+                }
                 
-                circle.className = step.animation;
-                circle.textContent = step.phase;
-                instructions.textContent = step.instruction;
+                time--;
+                timerElement.textContent = `Time remaining: ${time}s`;
+                updateProgress('breathing-progress', 60, time);
                 
-                currentStep = (currentStep + 1) % steps.length;
+                if (time <= 0) {
+                    clearInterval(window.breathingInterval);
+                    playSound(successSound, 0.4);
+                    setTimeout(() => closePopup('breathing'), 1500);
+                }
+            }
+            
+            updateBreathing(); // Initial update
+            window.breathingInterval = setInterval(updateBreathing, 1000);
+        }
+
+        // Soundscape: Enhanced with different sound options and volume control (from Claude)
+        function startSoundscape() {
+            let time = 90;
+            const timerElement = document.getElementById('soundscape-timer');
+            const selectElement = document.getElementById('soundscape-select');
+            const playButton = document.getElementById('play-btn');
+            const volumeSlider = document.getElementById('volume-slider');
+            
+            // Reset
+            updateProgress('soundscape-progress', 90, 0);
+            
+            // Set up play button
+            playButton.onclick = function() {
+                const soundType = selectElement.value;
+                if (currentSound) currentSound.pause();
+                currentSound = natureSounds[soundType];
+                currentSound.volume = volumeSlider.value;
+                currentSound.play().catch(error => {
+                    console.error('Sound playback failed:', error);
+                    alert('Sound playback failed. Please ensure your browser allows audio playback.');
+                });
+                playButton.innerHTML = '<i class="fas fa-pause"></i>';
+                playButton.onclick = function() {
+                    if (currentSound.paused) {
+                        currentSound.play();
+                        playButton.innerHTML = '<i class="fas fa-pause"></i>';
+                    } else {
+                        currentSound.pause();
+                        playButton.innerHTML = '<i class="fas fa-play"></i>';
+                    }
+                };
+            };
+            
+            // Set up volume control
+            volumeSlider.oninput = function() {
+                if (currentSound) currentSound.volume = this.value;
+            };
+            
+            window.soundscapeInterval = setInterval(() => {
+                time--;
+                timerElement.textContent = `Time remaining: ${time}s`;
+                updateProgress('soundscape-progress', 90, time);
                 
-                if (currentStep === 0) {
-                    cycleCount++;
-                    if (cycleCount >= totalCycles) {
-                        setTimeout(() => {
-                            circle.className = 'complete';
-                            circle.textContent = 'Complete';
-                            instructions.textContent = 'Great job!';
-                            startButton.disabled = false;
-                            startButton.textContent = 'Restart';
-                            showBreathingCompletionEffect();
-                        }, steps[3].duration);
-                        return;
+                if (time <= 0) {
+                    clearInterval(window.soundscapeInterval);
+                    if (currentSound) {
+                        // Fade out the sound
+                        const fadeInterval = setInterval(() => {
+                            if (currentSound.volume > 0.1) {
+                                currentSound.volume -= 0.1;
+                            } else {
+                                currentSound.pause();
+                                clearInterval(fadeInterval);
+                                playSound(successSound, 0.4);
+                                setTimeout(() => closePopup('soundscape'), 1500);
+                            }
+                        }, 100);
+                    } else {
+                        playSound(successSound, 0.4);
+                        setTimeout(() => closePopup('soundscape'), 1500);
                     }
                 }
-                
-                setTimeout(updateBreathingState, step.duration);
-            }
-            
-            updateBreathingState();
+            }, 1000);
         }
 
-        function showBreathingCompletionEffect() {
-            const container = document.querySelector('#breathingPopup .popup-content');
-            for (let i = 0; i < 20; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'breathing-particle';
-                const angle = Math.random() * Math.PI * 2;
-                const distance = 50 + Math.random() * 50;
-                const x = Math.cos(angle) * distance;
-                const y = Math.sin(angle) * distance;
-                particle.style.left = `calc(50% + ${x}px)`;
-                particle.style.top = `calc(50% + ${y}px)`;
-                particle.style.backgroundColor = `hsl(${120 + Math.random() * 60}, 80%, 60%)`;
-                particle.style.animationDelay = `${Math.random() * 0.5}s`;
-                container.appendChild(particle);
-                setTimeout(() => particle.remove(), 2000);
-            }
-        }
-
-        // Enhanced color shift
-        function prepareColorShift() {
-            const square = document.getElementById('color-square');
-            square.style.backgroundColor = '#2ecc71';
-            square.style.transform = 'scale(1)';
-            square.innerHTML = '';
-        }
-
-        function startColorShift() {
-            const square = document.getElementById('color-square');
-            const colors = [
-                { color: '#2ecc71', mood: 'tranquil', transform: 'scale(1)' },
-                { color: '#3498db', mood: 'calm', transform: 'scale(1.1) rotate(5deg)' },
-                { color: '#9b59b6', mood: 'creative', transform: 'scale(0.9) rotate(-5deg)' },
-                { color: '#e74c3c', mood: 'energized', transform: 'scale(1.2)' },
-                { color: '#f1c40f', mood: 'optimistic', transform: 'scale(1) rotate(10deg)' }
-            ];
-            
-            let index = 0;
-            const button = document.querySelector('#colorPopup .action-button');
-            button.disabled = true;
-            button.textContent = 'Shifting...';
-            
-            const moodLabel = document.createElement('div');
-            moodLabel.className = 'color-mood-label';
-            square.appendChild(moodLabel);
-            
-            const interval = setInterval(() => {
-                const colorInfo = colors[index];
-                square.style.backgroundColor = colorInfo.color;
-                square.style.transform = colorInfo.transform;
-                moodLabel.style.opacity = '0';
-                setTimeout(() => {
-                    moodLabel.textContent = colorInfo.mood;
-                    moodLabel.style.opacity = '1';
-                }, 300);
-                index = (index + 1) % colors.length;
-            }, 2000);
-            
-            setTimeout(() => {
-                clearInterval(interval);
-                square.style.transform = 'scale(1)';
-                moodLabel.style.opacity = '0';
-                setTimeout(() => {
-                    moodLabel.textContent = 'Complete';
-                    moodLabel.style.opacity = '1';
-                }, 300);
-                button.disabled = false;
-                button.textContent = 'Start Again';
-            }, 10000);
-        }
-
-        // Enhanced punching bag
-        let punchCount = 10;
-        function preparePunchingBag() {
-            punchCount = 10;
+        // Punching Bag: Enhanced with animation and sound effects (from Claude)
+        function startPunching() {
+            let time = 30;
+            let count = 0;
             const bag = document.getElementById('punching-bag');
-            const counter = document.getElementById('punch-counter');
-            bag.textContent = punchCount;
-            counter.textContent = `Punches left: ${punchCount}`;
-            bag.style.boxShadow = '0 10px 20px rgba(0,0,0,0.3)';
-        }
-
-        // Gratitude note
-        function saveGratitude() {
-            const text = document.getElementById('gratitude-text').value;
-            if (text.trim()) {
-                alert('Gratitude note saved! (This will be stored locally in the future)');
-                document.getElementById('gratitude-text').value = '';
-                closePopup('gratitude');
-            } else {
-                alert('Please write something before saving.');
-            }
-        }
-
-        // Soundscape
-        let soundscapeAudio = null;
-        let soundscapeInterval = null;
-
-        function playSoundscape() {
-            const select = document.getElementById('sound-select');
-            const sound = select.value;
-            if (soundscapeAudio) {
-                soundscapeAudio.pause();
-                soundscapeAudio = null;
-            }
-
-            soundscapeAudio = new Audio(`sounds/${sound}.mp3`);
-            soundscapeAudio.loop = false;
-            soundscapeAudio.onerror = () => {
-                console.error(`Failed to load audio file: sounds/${sound}.mp3`);
-                alert(`Sorry, the sound file for "${sound}" could not be loaded. Please ensure the file exists in the sounds/ directory.`);
+            const timerElement = document.getElementById('punching-timer');
+            
+            // Reset
+            bag.textContent = '0';
+            bag.style.transform = 'scale(1)';
+            updateProgress('punching-progress', 30, 0);
+            
+            bag.onclick = () => {
+                count++;
+                bag.textContent = count;
+                playSound(punchSound, 0.3);
+                
+                bag.style.transform = 'scale(0.9) rotate(-5deg)';
+                setTimeout(() => {
+                    bag.style.transform = 'scale(1) rotate(0)';
+                }, 150);
             };
-            soundscapeAudio.play().catch(error => {
-                console.error('Audio playback failed:', error);
-                alert('Audio playback failed. Please ensure your browser allows audio playback and the file is accessible.');
-            });
-
-            const progressBar = document.getElementById('soundscape-progress');
-            progressBar.style.width = '100%';
-            let timeLeft = 30;
-            soundscapeInterval = setInterval(() => {
-                timeLeft--;
-                progressBar.style.width = (timeLeft / 30 * 100) + '%';
-                if (timeLeft <= 0) {
-                    clearInterval(soundscapeInterval);
-                    soundscapeAudio.pause();
-                    soundscapeAudio = null;
+            
+            window.punchingInterval = setInterval(() => {
+                time--;
+                timerElement.textContent = `Time remaining: ${time}s`;
+                updateProgress('punching-progress', 30, time);
+                
+                if (time <= 0) {
+                    clearInterval(window.punchingInterval);
+                    playSound(successSound, 0.4);
+                    bag.textContent = count;
+                    bag.innerHTML = `<span>Great job!</span><br>${count}`;
+                    setTimeout(() => closePopup('punching'), 2000);
                 }
             }, 1000);
         }
 
-        function pauseSoundscape() {
-            if (soundscapeAudio) {
-                soundscapeAudio.pause();
-                soundscapeAudio = null;
-            }
-            if (soundscapeInterval) {
-                clearInterval(soundscapeInterval);
-            }
-            document.getElementById('soundscape-progress').style.width = '100%';
-        }
-
-        // Stretch
+        // Stretch: Enhanced with images and detailed instructions (from Claude)
         function startStretch() {
-            alert('Follow the instructions: Raise your arms, hold for 5 seconds, and lower them. Repeat 3 times.');
-            closePopup('stretch');
+            let time = 60;
+            const prompts = [
+                { text: "Reach for the sky and hold for a few seconds.", img: "/api/placeholder/200/150" },
+                { text: "Touch your toes and feel the stretch in your legs.", img: "/api/placeholder/200/150" },
+                { text: "Stretch your arms behind your back and open your chest.", img: "/api/placeholder/200/150" },
+                { text: "Gently roll your head from side to side.", img: "/api/placeholder/200/150" }
+            ];
+            const promptElement = document.getElementById('stretch-prompt');
+            const timerElement = document.getElementById('stretch-timer');
+            const imageElement = document.getElementById('stretch-image');
+            
+            // Choose a random stretch
+            const randomStretch = prompts[Math.floor(Math.random() * prompts.length)];
+            promptElement.textContent = randomStretch.text;
+            imageElement.src = randomStretch.img;
+            
+            // Reset
+            updateProgress('stretch-progress', 60, 0);
+            
+            window.stretchInterval = setInterval(() => {
+                time--;
+                timerElement.textContent = `Time remaining: ${time}s`;
+                updateProgress('stretch-progress', 60, time);
+                
+                if (time <= 0) {
+                    clearInterval(window.stretchInterval);
+                    playSound(successSound, 0.4);
+                    setTimeout(() => closePopup('stretch'), 1500);
+                }
+            }, 1000);
         }
 
-        // Doodle pad
-        let isDrawing = false;
-        let lastX = 0;
-        let lastY = 0;
-
-        function initDoodle() {
+        // Doodle: Enhanced with color picker and brush size options (from Claude)
+        function startDoodle() {
+            let time = 90;
             const canvas = document.getElementById('doodle-canvas');
             const ctx = canvas.getContext('2d');
+            const timerElement = document.getElementById('doodle-timer');
+            const colorPicker = document.getElementById('color-picker');
+            const brushSize = document.getElementById('brush-size');
+            let drawing = false;
+            let lastX = 0;
+            let lastY = 0;
+            
+            // Set canvas size
             canvas.width = canvas.offsetWidth;
             canvas.height = canvas.offsetHeight;
-
-            canvas.addEventListener('mousedown', (e) => {
-                isDrawing = true;
-                [lastX, lastY] = [e.offsetX, e.offsetY];
+            
+            // Reset canvas
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            updateProgress('doodle-progress', 90, 0);
+            
+            // Drawing functions
+            function startDrawing(e) {
+                drawing = true;
+                const rect = canvas.getBoundingClientRect();
+                lastX = e.clientX - rect.left;
+                lastY = e.clientY - rect.top;
+            }
+            
+            function draw(e) {
+                if (!drawing) return;
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                ctx.strokeStyle = colorPicker.value;
+                ctx.lineWidth = brushSize.value;
+                ctx.lineCap = 'round';
+                
+                ctx.beginPath();
+                ctx.moveTo(lastX, lastY);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+                
+                lastX = x;
+                lastY = y;
+            }
+            
+            function stopDrawing() {
+                drawing = false;
+            }
+            
+            // Event listeners
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
+            
+            // Touch support
+            canvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const mouseEvent = new MouseEvent('mousedown', {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                });
+                canvas.dispatchEvent(mouseEvent);
             });
-
-            canvas.addEventListener('mousemove', (e) => {
-                if (isDrawing) {
-                    ctx.beginPath();
-                    ctx.moveTo(lastX, lastY);
-                    ctx.lineTo(e.offsetX, e.offsetY);
-                    ctx.strokeStyle = document.getElementById('doodle-color').value;
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
-                    [lastX, lastY] = [e.offsetX, e.offsetY];
-                }
+            
+            canvas.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const mouseEvent = new MouseEvent('mousemove', {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                });
+                canvas.dispatchEvent(mouseEvent);
             });
-
-            canvas.addEventListener('mouseup', () => isDrawing = false);
-            canvas.addEventListener('mouseout', () => isDrawing = false);
-        }
-
-        function clearDoodle() {
-            const canvas = document.getElementById('doodle-canvas');
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-        }
-
-        // Dance break
-        let danceAudio = null;
-        let danceInterval = null;
-
-        function playDanceBeat() {
-            if (danceAudio) danceAudio.pause();
-            danceAudio = new Audio('sounds/dance-beat.mp3');
-            danceAudio.loop = false;
-            danceAudio.play();
-
-            const progressBar = document.getElementById('dance-progress');
-            progressBar.className = 'progress-bar bounce';
-            let timeLeft = 15;
-            danceInterval = setInterval(() => {
-                timeLeft--;
-                progressBar.style.width = (timeLeft / 15 * 100) + '%';
-                if (timeLeft <= 0) {
-                    clearInterval(danceInterval);
-                    danceAudio.pause();
+            
+            canvas.addEventListener('touchend', () => {
+                const mouseEvent = new MouseEvent('mouseup');
+                canvas.dispatchEvent(mouseEvent);
+            });
+            
+            window.doodleInterval = setInterval(() => {
+                time--;
+                timerElement.textContent = `Time remaining: ${time}s`;
+                updateProgress('doodle-progress', 90, time);
+                
+                if (time <= 0) {
+                    clearInterval(window.doodleInterval);
+                    playSound(successSound, 0.4);
+                    // Don't close automatically to allow saving
                 }
             }, 1000);
+        }
+
+        // Clear canvas function (from Claude)
+        function clearCanvas() {
+            const canvas = document.getElementById('doodle-canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // Save doodle function (from Claude)
+        function saveDoodle() {
+            const canvas = document.getElementById('doodle-canvas');
+            const link = document.createElement('a');
+            link.download = 'my-doodle-' + new Date().toISOString().slice(0, 10) + '.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+
+        // Dance: Enhanced with animation and better prompts (from Claude)
+        function startDance() {
+            let time = 30;
+            const prompts = [
+                "Spin around and let loose! Feel the rhythm!",
+                "Do a little shimmy to your own beat!",
+                "Jump up and down with joy! Release that energy!",
+                "Wave your arms like you just don't care!"
+            ];
+            const promptElement = document.getElementById('dance-prompt');
+            const timerElement = document.getElementById('dance-timer');
+            const animation = document.getElementById('dance-animation');
+            
+            // Choose a random dance prompt
+            promptElement.textContent = prompts[Math.floor(Math.random() * prompts.length)];
+            animation.innerHTML = '<i class="fas fa-child fa-4x" style="animation: bounce 1s infinite alternate;"></i>';
+            
+            // Reset
+            updateProgress('dance-progress', 30, 0);
+            
+            // Play dance beat
+            danceAudio.currentTime = 0;
+            danceAudio.play().catch(error => {
+                console.error('Dance audio playback failed:', error);
+            });
+            
+            window.danceInterval = setInterval(() => {
+                time--;
+                timerElement.textContent = `Time remaining: ${time}s`;
+                updateProgress('dance-progress', 30, time);
+                
+                if (time <= 0) {
+                    clearInterval(window.danceInterval);
+                    danceAudio.pause();
+                    playSound(successSound, 0.4);
+                    setTimeout(() => closePopup('dance'), 1500);
+                }
+            }, 1000);
+        }
+
+        function playDanceBeat() {
+            if (danceAudio.paused) {
+                danceAudio.play();
+            }
         }
 
         function pauseDanceBeat() {
             if (danceAudio) danceAudio.pause();
-            if (danceInterval) clearInterval(danceInterval);
+            if (window.danceInterval) clearInterval(window.danceInterval);
             document.getElementById('dance-progress').style.width = '100%';
         }
 
-        // Worry shredder
+        // Worry Shredder: Enhanced with animation effect (from Claude)
         function shredWorry() {
             const worryText = document.getElementById('worry-text');
-            const worryMessage = document.getElementById('worry-message');
-            if (worryText.value.trim()) {
-                worryText.classList.add('shredding');
-                worryMessage.textContent = 'Shredding your worry...';
-                setTimeout(() => {
-                    worryText.value = '';
-                    worryMessage.textContent = 'Worry shredded!';
-                    worryText.classList.remove('shredding');
-                }, 1000);
-            } else {
-                worryMessage.textContent = 'Please write a worry to shred.';
+            const paperStripsContainer = document.getElementById('paper-strips-container');
+            
+            if (worryText.value.trim() === '') {
+                alert('Please write a worry to shred!');
+                return;
             }
+            
+            // Create paper strips animation
+            paperStripsContainer.innerHTML = '';
+            const numStrips = 10;
+            
+            for (let i = 0; i < numStrips; i++) {
+                const strip = document.createElement('div');
+                strip.className = 'paper-strip';
+                strip.style.cssText = `
+                    position: absolute;
+                    left: ${10 + (i * 8)}%;
+                    top: 0;
+                    width: 5%;
+                    height: 30px;
+                    background-color: #fff;
+                    border: 1px solid #ddd;
+                    transform-origin: top center;
+                    animation: shred 1s forwards ${i * 0.1}s;
+                `;
+                paperStripsContainer.appendChild(strip);
+            }
+            
+            // Play shredding sound
+            playSound(shredSound);
+            
+            // Animate the textarea
+            worryText.classList.add('shredding');
+            
+            setTimeout(() => {
+                worryText.value = '';
+                worryText.classList.remove('shredding');
+                paperStripsContainer.innerHTML = '';
+                
+                // Show a confirmation
+                const confirmation = document.createElement('div');
+                confirmation.textContent = 'Worry shredded! Feel lighter?';
+                confirmation.style.cssText = `
+                    color: var(--success);
+                    font-weight: 500;
+                    margin: 15px 0;
+                    animation: fadeIn 0.5s forwards;
+                `;
+                paperStripsContainer.appendChild(confirmation);
+                
+                setTimeout(() => {
+                    closePopup('worry');
+                }, 2000);
+            }, 1000);
+        }
+
+        // Prepare color shift
+        function prepareColorShift() {
+            const square = document.getElementById('color-square');
+            const promptElement = document.getElementById('color-prompt');
+            const timerElement = document.getElementById('color-timer');
+            
+            square.style.backgroundColor = '#1E90FF';
+            square.style.transform = 'scale(1)';
+            square.innerHTML = '';
+            promptElement.textContent = 'Focus on the color to relax.';
+            timerElement.textContent = 'Time remaining: 60s';
+            updateProgress('color-progress', 60, 0);
+        }
+
+        // Color Focus: Enhanced with pulsing animation and more colors (from Claude)
+        function startColorFocus() {
+            let time = 60;
+            const colors = [
+                { name: "Blue to soothe your mind", hex: "#1E90FF" },
+                { name: "Green to restore balance", hex: "#32CD32" },
+                { name: "Yellow to uplift your spirit", hex: "#FFD700" },
+                { name: "Purple to inspire creativity", hex: "#9370DB" },
+                { name: "Turquoise to refresh", hex: "#40E0D0" }
+            ];
+            const randomColor = colors[Math.floor(Math.random() * colors.length)];
+            const promptElement = document.getElementById('color-prompt');
+            const squareElement = document.getElementById('color-square');
+            const timerElement = document.getElementById('color-timer');
+            
+            promptElement.textContent = `Focus on ${randomColor.name}`;
+            squareElement.style.backgroundColor = randomColor.hex;
+            
+            // Add pulsing animation
+            squareElement.style.animation = 'pulse 4s infinite';
+            
+            // Reset
+            updateProgress('color-progress', 60, 0);
+            
+            window.colorInterval = setInterval(() => {
+                time--;
+                timerElement.textContent = `Time remaining: ${time}s`;
+                updateProgress('color-progress', 60, time);
+                
+                if (time <= 0) {
+                    clearInterval(window.colorInterval);
+                    playSound(successSound, 0.4);
+                    setTimeout(() => closePopup('color'), 1500);
+                }
+            }, 1000);
+        }
+
+        // Gratitude Note: Enhanced with confirmation and storage (from Claude)
+        function saveGratitude() {
+            const gratitudeText = document.getElementById('gratitude-text');
+            
+            if (gratitudeText.value.trim() === '') {
+                alert('Please write something you\'re grateful for!');
+                return;
+            }
+            
+            // Store in localStorage if available
+            if (typeof Storage !== "undefined") {
+                const gratitudeList = JSON.parse(localStorage.getItem('gratitudeList') || '[]');
+                gratitudeList.push({
+                    text: gratitudeText.value,
+                    date: new Date().toISOString()
+                });
+                localStorage.setItem('gratitudeList', JSON.stringify(gratitudeList));
+            }
+            
+            // Play success sound
+            playSound(successSound, 0.4);
+            
+            // Show confirmation with animation
+            gratitudeText.style.transition = 'all 0.3s';
+            gratitudeText.style.backgroundColor = '#e6ffe6';
+            gratitudeText.style.borderColor = '#27ae60';
+            
+            setTimeout(() => {
+                alert('Gratitude saved! Feeling more thankful?');
+                closePopup('gratitude');
+            }, 1000);
         }
 
         // Share on X
@@ -1049,7 +1330,7 @@
             }
             
             // Preload sounds
-            const sounds = ['rain', 'waves', 'forest', 'dance-beat'];
+            const sounds = ['rain', 'waves', 'forest', 'dance-beat', 'success', 'punch', 'shred'];
             sounds.forEach(sound => {
                 const audio = new Audio();
                 audio.preload = 'auto';
@@ -1079,30 +1360,28 @@
             // Setup share button
             setupShareButton();
 
-            // Setup punching bag event listener
-            const punchingBag = document.getElementById('punching-bag');
-            if (punchingBag) {
-                console.log('Punching bag found, setting up event listener');
-                punchingBag.addEventListener('click', () => {
-                    console.log('Punching bag clicked');
-                    if (punchCount > 0) {
-                        punchCount--;
-                        punchingBag.style.transform = 'rotate(5deg)';
-                        setTimeout(() => punchingBag.style.transform = 'rotate(-5deg)', 100);
-                        setTimeout(() => punchingBag.style.transform = 'rotate(0deg)', 200);
-                        punchingBag.textContent = punchCount;
-                        document.getElementById('punch-counter').textContent = `Punches left: ${punchCount}`;
-                        if (punchCount === 0) {
-                            setTimeout(() => {
-                                punchingBag.textContent = 'Done!';
-                                document.getElementById('punch-counter').textContent = 'Great job!';
-                            }, 300);
-                        }
-                    }
+            // Add ripple effect to buttons (from Claude)
+            const buttons = document.querySelectorAll('.tool-button, .action-button');
+            buttons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    const ripple = document.createElement('span');
+                    ripple.className = 'ripple';
+                    this.appendChild(ripple);
+                    
+                    const rect = this.getBoundingClientRect();
+                    const size = Math.max(rect.width, rect.height);
+                    ripple.style.width = ripple.style.height = `${size}px`;
+                    
+                    const x = e.clientX - rect.left - size / 2;
+                    const y = e.clientY - rect.top - size / 2;
+                    ripple.style.left = `${x}px`;
+                    ripple.style.top = `${y}px`;
+                    
+                    setTimeout(() => {
+                        ripple.remove();
+                    }, 600);
                 });
-            } else {
-                console.warn('Punching bag element not found');
-            }
+            });
         });
     </script>
 </body>
